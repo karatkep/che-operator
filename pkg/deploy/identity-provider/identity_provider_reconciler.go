@@ -16,8 +16,10 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/devfile/devworkspace-operator/pkg/infrastructure"
+	"github.com/eclipse-che/che-operator/pkg/common/chetypes"
+	"github.com/eclipse-che/che-operator/pkg/common/utils"
 	"github.com/eclipse-che/che-operator/pkg/deploy"
-	"github.com/eclipse-che/che-operator/pkg/util"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	oauth "github.com/openshift/api/oauth/v1"
 	"github.com/sirupsen/logrus"
@@ -40,7 +42,7 @@ func NewIdentityProviderReconciler() *IdentityProviderReconciler {
 	return &IdentityProviderReconciler{}
 }
 
-func (ip *IdentityProviderReconciler) Reconcile(ctx *deploy.DeployContext) (reconcile.Result, bool, error) {
+func (ip *IdentityProviderReconciler) Reconcile(ctx *chetypes.DeployContext) (reconcile.Result, bool, error) {
 	done, err := syncNativeIdentityProviderItems(ctx)
 	if !done {
 		return reconcile.Result{Requeue: true}, false, err
@@ -48,10 +50,10 @@ func (ip *IdentityProviderReconciler) Reconcile(ctx *deploy.DeployContext) (reco
 	return reconcile.Result{}, true, nil
 }
 
-func (ip *IdentityProviderReconciler) Finalize(ctx *deploy.DeployContext) bool {
+func (ip *IdentityProviderReconciler) Finalize(ctx *chetypes.DeployContext) bool {
 	var err error
 
-	oAuthClientName := ctx.CheCluster.Spec.Auth.OAuthClientName
+	oAuthClientName := ctx.CheCluster.Spec.Ingress.Auth.OAuthClientName
 	if oAuthClientName != "" {
 		err = deploy.DeleteObjectWithFinalizer(ctx, types.NamespacedName{Name: oAuthClientName}, &oauth.OAuthClient{}, OAuthFinalizerName)
 	} else {
@@ -65,7 +67,7 @@ func (ip *IdentityProviderReconciler) Finalize(ctx *deploy.DeployContext) bool {
 	return true
 }
 
-func syncNativeIdentityProviderItems(deployContext *deploy.DeployContext) (bool, error) {
+func syncNativeIdentityProviderItems(deployContext *chetypes.DeployContext) (bool, error) {
 	cr := deployContext.CheCluster
 
 	if err := resolveOpenshiftOAuthClientName(deployContext); err != nil {
@@ -75,9 +77,9 @@ func syncNativeIdentityProviderItems(deployContext *deploy.DeployContext) (bool,
 		return false, err
 	}
 
-	if util.IsOpenShift {
-		redirectURIs := []string{"https://" + deployContext.CheCluster.GetCheHost() + "/oauth/callback"}
-		oAuthClient := getOAuthClientSpec(cr.Spec.Auth.OAuthClientName, cr.Spec.Auth.OAuthSecret, redirectURIs)
+	if infrastructure.IsOpenShift() {
+		redirectURIs := []string{"https://" + deployContext.CheHost + "/oauth/callback"}
+		oAuthClient := getOAuthClientSpec(cr.Spec.Ingress.Auth.OAuthClientName, cr.Spec.Ingress.Auth.OAuthSecret, redirectURIs)
 		done, err := deploy.Sync(deployContext, oAuthClient, oAuthClientDiffOpts)
 		if !done {
 			return false, err
@@ -92,12 +94,12 @@ func syncNativeIdentityProviderItems(deployContext *deploy.DeployContext) (bool,
 	return true, nil
 }
 
-func resolveOpenshiftOAuthClientName(deployContext *deploy.DeployContext) error {
+func resolveOpenshiftOAuthClientName(deployContext *chetypes.DeployContext) error {
 	cr := deployContext.CheCluster
-	oAuthClientName := cr.Spec.Auth.OAuthClientName
+	oAuthClientName := cr.Spec.Ingress.Auth.OAuthClientName
 	if len(oAuthClientName) < 1 {
-		oAuthClientName = cr.Name + "-openshift-identity-provider-" + strings.ToLower(util.GeneratePasswd(6))
-		cr.Spec.Auth.OAuthClientName = oAuthClientName
+		oAuthClientName = cr.Name + "-openshift-identity-provider-" + strings.ToLower(utils.GeneratePassword(6))
+		cr.Spec.Ingress.Auth.OAuthClientName = oAuthClientName
 		if err := deploy.UpdateCheCRSpec(deployContext, "oAuthClient name", oAuthClientName); err != nil {
 			return err
 		}
@@ -105,12 +107,12 @@ func resolveOpenshiftOAuthClientName(deployContext *deploy.DeployContext) error 
 	return nil
 }
 
-func resolveOpenshiftOAuthClientSecret(deployContext *deploy.DeployContext) error {
+func resolveOpenshiftOAuthClientSecret(deployContext *chetypes.DeployContext) error {
 	cr := deployContext.CheCluster
-	oauthSecret := cr.Spec.Auth.OAuthSecret
+	oauthSecret := cr.Spec.Ingress.Auth.OAuthSecret
 	if len(oauthSecret) < 1 {
-		oauthSecret = util.GeneratePasswd(12)
-		cr.Spec.Auth.OAuthSecret = oauthSecret
+		oauthSecret = utils.GeneratePassword(12)
+		cr.Spec.Ingress.Auth.OAuthSecret = oauthSecret
 		if err := deploy.UpdateCheCRSpec(deployContext, "oAuth secret name", oauthSecret); err != nil {
 			return err
 		}
