@@ -63,7 +63,7 @@ type TraefikConfigHeaders struct {
 }
 
 type CustomRequestHeaders struct {
-	XForwardedAccessToken string `json:"X-Forwarded-Access-Token,omitempty"`
+	XForwardedAccessToken string `json:"X-Forwarded-Access-Token"`
 }
 type TraefikPlugin struct {
 	HeaderRewrite *TraefikPluginHeaderRewrite `json:"header-rewrite,omitempty"`
