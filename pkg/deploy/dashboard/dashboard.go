@@ -126,6 +126,9 @@ func (d *DashboardReconciler) createGatewayConfig(ctx *deploy.DeployContext) *ga
 		[]string{})
 	if util.IsOpenShift {
 		cfg.AddAuthHeaderRewrite(d.getComponentName(ctx))
+	} else {
+		cfg.AddAuthHeaderRewrite(d.getComponentName(ctx))
+		cfg.AddStripcookie(d.getComponentName(ctx))
 	}
 	return cfg
 }

@@ -40,7 +40,7 @@ IMAGE_TAG_BASE ?= quay.io/eclipse/che-operator
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 # Image URL to use all building/pushing image targets
-IMG ?= quay.io/eclipse/che-operator:next
+IMG ?= coreimfeiddev001.azurecr.io/web-ide/che-operator:next
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 

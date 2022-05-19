@@ -312,7 +312,7 @@ func TestCreateRelocatedObjectsK8S(t *testing.T) {
 
 		workspaceMainConfig := gateway.TraefikConfig{}
 		assert.NoError(t, yaml.Unmarshal([]byte(traefikMainWorkspaceConfig), &workspaceMainConfig))
-		assert.Len(t, workspaceMainConfig.HTTP.Middlewares, 2)
+		assert.Len(t, workspaceMainConfig.HTTP.Middlewares, 4)
 
 		wsid = "wsid"
 		mwares = []string{

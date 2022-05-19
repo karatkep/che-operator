@@ -110,3 +110,21 @@ func TestIsCheMultiUser(t *testing.T) {
 		}
 	}
 }
+
+func TestGetHostname(t *testing.T) {
+	url := "https://che.quanthubchedev.com/workspaceebc6d2c3c5034c04/theia-ide/3100/"
+	expected := "che.quanthubchedev.com"
+	actual := GetHostname(url)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Test Failed. Expected '%s', but got '%s'", expected, actual)
+	}
+}
+
+func TestWhitelist(t *testing.T) {
+	host := "che.quanthubchedev.com"
+	expected := ".quanthubchedev.com"
+	actual := Whitelist(host)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Test Failed. Expected '%s', but got '%s'", expected, actual)
+	}
+}

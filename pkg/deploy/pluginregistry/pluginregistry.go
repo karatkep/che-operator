@@ -132,5 +132,6 @@ func (p *PluginRegistryReconciler) createGatewayConfig(ctx *deploy.DeployContext
 		"http://"+deploy.PluginRegistryName+":8080",
 		[]string{pathPrefix})
 
+	cfg.AddStripcookie(deploy.PluginRegistryName)
 	return cfg
 }

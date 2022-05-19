@@ -14,6 +14,8 @@ package gateway
 const (
 	StripPrefixMiddlewareSuffix   = "-strip-prefix"
 	HeaderRewriteMiddlewareSuffix = "-header-rewrite"
+	HeaderRemoveMiddlewareSuffix  = "-header-remove"
+	StripcookieMiddlewareSuffix   = "-stripcookie"
 	AuthMiddlewareSuffix          = "-auth"
 )
 
@@ -70,9 +72,23 @@ func (cfg *TraefikConfig) AddAuthHeaderRewrite(componentName string) {
 	cfg.HTTP.Middlewares[middlewareName] = &TraefikConfigMiddleware{
 		Plugin: &TraefikPlugin{
 			HeaderRewrite: &TraefikPluginHeaderRewrite{
-				From:   "X-Forwarded-Access-Token",
-				To:     "Authorization",
-				Prefix: "Bearer ",
+				From:               "X-Forwarded-Access-Token",
+				To:                 "Authorization",
+				Prefix:             "Bearer ",
+				KeepOriginal:       false,
+				KeepOriginalTarget: false,
+			},
+		},
+	}
+}
+
+func (cfg *TraefikConfig) AddStripcookie(componentName string) {
+	middlewareName := componentName + StripcookieMiddlewareSuffix
+	cfg.HTTP.Routers[componentName].Middlewares = append(cfg.HTTP.Routers[componentName].Middlewares, middlewareName)
+	cfg.HTTP.Middlewares[middlewareName] = &TraefikConfigMiddleware{
+		Plugin: &TraefikPlugin{
+			Stripcookie: &TraefikPluginStripcookie{
+				Cookies: []string{"_oauth2_proxy", "_oauth2_proxy_0", "_oauth2_proxy_1", "_oauth2_proxy_2", "_oauth2_proxy_3"},
 			},
 		},
 	}
@@ -98,6 +114,18 @@ func (cfg *TraefikConfig) AddAuth(componentName string, authAddress string) {
 	cfg.HTTP.Middlewares[middlewareName] = &TraefikConfigMiddleware{
 		ForwardAuth: &TraefikConfigForwardAuth{
 			Address: authAddress,
+		},
+	}
+}
+
+func (cfg *TraefikConfig) AddRemoveHeader(componentName string) {
+	middlewareName := componentName + HeaderRemoveMiddlewareSuffix
+	cfg.HTTP.Routers[componentName].Middlewares = append(cfg.HTTP.Routers[componentName].Middlewares, middlewareName)
+	cfg.HTTP.Middlewares[middlewareName] = &TraefikConfigMiddleware{
+		Headers: &TraefikConfigHeaders{
+			CustomRequestHeaders: &CustomRequestHeaders{
+				XForwardedAccessToken: "",
+			},
 		},
 	}
 }

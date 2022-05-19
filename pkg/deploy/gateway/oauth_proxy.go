@@ -100,6 +100,11 @@ email_domains = "*"
 cookie_httponly = false
 pass_authorization_header = true
 skip_provider_button = true
+scope="openid email profile 6dae42f8-4368-4678-94ff-3960e28e3630/.default"
+pass_access_token = true
+set_xauthrequest = false
+whitelist_domains = "%s"
+cookie_domains = "%s"
 %s
 `, GatewayServicePort,
 		ctx.CheCluster.GetCheHost(),
@@ -107,6 +112,8 @@ skip_provider_button = true
 		ctx.CheCluster.Spec.Auth.OAuthClientName,
 		ctx.CheCluster.Spec.Auth.OAuthSecret,
 		cookieSecret,
+		util.Whitelist(ctx.CheCluster.GetCheHost()),
+		util.Whitelist(ctx.CheCluster.GetCheHost()),
 		skipAuthConfig(ctx.CheCluster))
 }
 

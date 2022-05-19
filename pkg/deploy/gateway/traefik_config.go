@@ -37,6 +37,7 @@ type TraefikConfigMiddleware struct {
 	StripPrefix *TraefikConfigStripPrefix `json:"stripPrefix,omitempty"`
 	ForwardAuth *TraefikConfigForwardAuth `json:"forwardAuth,omitempty"`
 	Plugin      *TraefikPlugin            `json:"plugin,omitempty"`
+	Headers     *TraefikConfigHeaders     `json:"headers,omitempty"`
 }
 
 type TraefikConfigLoadbalancer struct {
@@ -57,14 +58,28 @@ type TraefikConfigForwardAuth struct {
 	TLS                *TraefikConfigTLS `json:"tls,omitempty"`
 }
 
+type TraefikConfigHeaders struct {
+	CustomRequestHeaders *CustomRequestHeaders `json:"customRequestHeaders,omitempty"`
+}
+
+type CustomRequestHeaders struct {
+	XForwardedAccessToken string `json:"X-Forwarded-Access-Token,omitempty"`
+}
 type TraefikPlugin struct {
 	HeaderRewrite *TraefikPluginHeaderRewrite `json:"header-rewrite,omitempty"`
+	Stripcookie   *TraefikPluginStripcookie   `json:"stripcookie,omitempty"`
 }
 
 type TraefikPluginHeaderRewrite struct {
-	From   string `json:"from"`
-	To     string `json:"to"`
-	Prefix string `json:"prefix"`
+	From               string `json:"from"`
+	To                 string `json:"to"`
+	Prefix             string `json:"prefix"`
+	KeepOriginal       bool   `json:"keepOriginal,omitempty"`
+	KeepOriginalTarget bool   `json:"keepOriginalTarget,omitempty"`
+}
+
+type TraefikPluginStripcookie struct {
+	Cookies []string `json:"cookies,omitempty"`
 }
 
 type TraefikConfigTLS struct {

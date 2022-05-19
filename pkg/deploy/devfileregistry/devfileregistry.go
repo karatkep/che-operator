@@ -115,5 +115,6 @@ func (d *DevfileRegistryReconciler) createGatewayConfig() *gateway.TraefikConfig
 		"http://"+deploy.DevfileRegistryName+":8080",
 		[]string{pathPrefix})
 
+	cfg.AddStripcookie(deploy.DevfileRegistryName)
 	return cfg
 }

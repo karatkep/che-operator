@@ -130,6 +130,21 @@ func syncAll(deployContext *deploy.DeployContext) error {
 		} else {
 			return err
 		}
+	} else {
+		if headerRewritePluginConfig, err := getGatewayHeaderRewritePluginConfigSpec(instance); err == nil {
+			if _, err := deploy.Sync(deployContext, headerRewritePluginConfig, configMapDiffOpts); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+		if stripcookiePluginConfig, err := getGatewayStripcookiePluginConfigSpec(instance); err == nil {
+			if _, err := deploy.Sync(deployContext, stripcookiePluginConfig, configMapDiffOpts); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 
 	traefikConfig := getGatewayTraefikConfigSpec(instance)
@@ -241,6 +256,9 @@ func getGatewayServerConfigSpec(deployContext *deploy.DeployContext) (corev1.Con
 		if util.IsOpenShift {
 			cfg.AddOpenShiftTokenCheck(serverComponentName)
 		}
+	} else {
+		cfg.AddStripcookie(serverComponentName)
+		cfg.AddRemoveHeader(serverComponentName)
 	}
 
 	return GetConfigmapForGatewayConfig(deployContext, serverComponentName, cfg)
@@ -373,6 +391,37 @@ func getGatewayHeaderRewritePluginConfigSpec(instance *orgv1.CheCluster) (*corev
 	}, nil
 }
 
+func getGatewayStripcookiePluginConfigSpec(instance *orgv1.CheCluster) (*corev1.ConfigMap, error) {
+	stripcookies, err := ioutil.ReadFile("/tmp/stripcookie-traefik-plugin/stripcookies.go")
+	if err != nil {
+		if !util.IsTestMode() {
+			return nil, err
+		}
+	}
+	pluginMeta, err := ioutil.ReadFile("/tmp/stripcookie-traefik-plugin/.traefik.yml")
+	if err != nil {
+		if !util.IsTestMode() {
+			return nil, err
+		}
+	}
+
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: corev1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "che-gateway-config-stripcookie-traefik-plugin",
+			Namespace: instance.Namespace,
+			Labels:    deploy.GetLabels(instance, GatewayServiceName),
+		},
+		Data: map[string]string{
+			"stripcookies.go": string(stripcookies),
+			".traefik.yml":    string(pluginMeta),
+		},
+	}, nil
+}
+
 func getGatewayTraefikConfigSpec(instance *orgv1.CheCluster) corev1.ConfigMap {
 	traefikPort := 8081
 	data := fmt.Sprintf(`
@@ -401,6 +450,14 @@ experimental:
   localPlugins:
     header-rewrite:
       moduleName: github.com/che-incubator/header-rewrite-traefik-plugin`
+	} else {
+		data += `
+experimental:
+  localPlugins:
+    header-rewrite:
+      moduleName: github.com/che-incubator/header-rewrite-traefik-plugin
+    stripcookie:
+      moduleName: "github.com/nilskohrs/stripcookie"`
 	}
 
 	return corev1.ConfigMap{
@@ -545,6 +602,15 @@ func getTraefikContainerVolumeMounts(instance *orgv1.CheCluster) []corev1.Volume
 			Name:      "header-rewrite-traefik-plugin",
 			MountPath: "/plugins-local/src/github.com/che-incubator/header-rewrite-traefik-plugin",
 		})
+	} else {
+		mounts = append(mounts, corev1.VolumeMount{
+			Name:      "header-rewrite-traefik-plugin",
+			MountPath: "/plugins-local/src/github.com/che-incubator/header-rewrite-traefik-plugin",
+		})
+		mounts = append(mounts, corev1.VolumeMount{
+			Name:      "stripcookie-traefik-plugin",
+			MountPath: "/plugins-local/src/github.com/nilskohrs/stripcookie",
+		})
 	}
 
 	return mounts
@@ -581,6 +647,27 @@ func getVolumesSpec(instance *orgv1.CheCluster) []corev1.Volume {
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{
 						Name: "che-gateway-config-header-rewrite-traefik-plugin",
+					},
+				},
+			},
+		})
+	} else {
+		volumes = append(volumes, corev1.Volume{
+			Name: "header-rewrite-traefik-plugin",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "che-gateway-config-header-rewrite-traefik-plugin",
+					},
+				},
+			},
+		})
+		volumes = append(volumes, corev1.Volume{
+			Name: "stripcookie-traefik-plugin",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "che-gateway-config-stripcookie-traefik-plugin",
 					},
 				},
 			},
