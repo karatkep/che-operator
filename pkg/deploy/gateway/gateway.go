@@ -130,7 +130,7 @@ func syncAll(deployContext *deploy.DeployContext) error {
 		} else {
 			return err
 		}
-	} else {
+	} else if util.IsAzureAKS {
 		if headerRewritePluginConfig, err := getGatewayHeaderRewritePluginConfigSpec(instance); err == nil {
 			if _, err := deploy.Sync(deployContext, headerRewritePluginConfig, configMapDiffOpts); err != nil {
 				return err
@@ -256,7 +256,7 @@ func getGatewayServerConfigSpec(deployContext *deploy.DeployContext) (corev1.Con
 		if util.IsOpenShift {
 			cfg.AddOpenShiftTokenCheck(serverComponentName)
 		}
-	} else {
+	} else if util.IsAzureAKS {
 		cfg.AddStripcookie(serverComponentName)
 		cfg.AddRemoveHeader(serverComponentName)
 	}
@@ -450,7 +450,7 @@ experimental:
   localPlugins:
     header-rewrite:
       moduleName: github.com/che-incubator/header-rewrite-traefik-plugin`
-	} else {
+	} else if util.IsAzureAKS {
 		data += `
 experimental:
   localPlugins:
@@ -602,7 +602,7 @@ func getTraefikContainerVolumeMounts(instance *orgv1.CheCluster) []corev1.Volume
 			Name:      "header-rewrite-traefik-plugin",
 			MountPath: "/plugins-local/src/github.com/che-incubator/header-rewrite-traefik-plugin",
 		})
-	} else {
+	} else if util.IsAzureAKS {
 		mounts = append(mounts, corev1.VolumeMount{
 			Name:      "header-rewrite-traefik-plugin",
 			MountPath: "/plugins-local/src/github.com/che-incubator/header-rewrite-traefik-plugin",
@@ -651,7 +651,7 @@ func getVolumesSpec(instance *orgv1.CheCluster) []corev1.Volume {
 				},
 			},
 		})
-	} else {
+	} else if util.IsAzureAKS {
 		volumes = append(volumes, corev1.Volume{
 			Name: "header-rewrite-traefik-plugin",
 			VolumeSource: corev1.VolumeSource{

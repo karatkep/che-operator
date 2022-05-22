@@ -17,6 +17,7 @@ import (
 	"github.com/eclipse-che/che-operator/pkg/deploy"
 	"github.com/eclipse-che/che-operator/pkg/deploy/expose"
 	"github.com/eclipse-che/che-operator/pkg/deploy/gateway"
+	"github.com/eclipse-che/che-operator/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -115,6 +116,8 @@ func (d *DevfileRegistryReconciler) createGatewayConfig() *gateway.TraefikConfig
 		"http://"+deploy.DevfileRegistryName+":8080",
 		[]string{pathPrefix})
 
-	cfg.AddStripcookie(deploy.DevfileRegistryName)
+	if util.IsAzureAKS {
+		cfg.AddStripcookie(deploy.DevfileRegistryName)
+	}
 	return cfg
 }

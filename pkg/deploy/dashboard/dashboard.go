@@ -126,7 +126,7 @@ func (d *DashboardReconciler) createGatewayConfig(ctx *deploy.DeployContext) *ga
 		[]string{})
 	if util.IsOpenShift {
 		cfg.AddAuthHeaderRewrite(d.getComponentName(ctx))
-	} else {
+	} else if util.IsAzureAKS {
 		cfg.AddAuthHeaderRewrite(d.getComponentName(ctx))
 		cfg.AddStripcookie(d.getComponentName(ctx))
 	}

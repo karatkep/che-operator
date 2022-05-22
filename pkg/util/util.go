@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"net/url"
 	"os"
 	"regexp"
 	"runtime"
@@ -47,6 +46,7 @@ import (
 var (
 	k8sclient                    = GetK8Client()
 	IsOpenShift, IsOpenShift4, _ = DetectOpenShift()
+	IsAzureAKS                   = DetectAzureAKS()
 )
 
 func ContainsString(slice []string, s string) bool {
@@ -412,18 +412,14 @@ func ClearMetadata(objectMeta *metav1.ObjectMeta) {
 	objectMeta.ManagedFields = []metav1.ManagedFieldsEntry{}
 }
 
-func GetHostname(link string) (value string) {
-	u, err := url.Parse(link)
-	if err != nil {
-		return link
-	}
-	return u.Host
-}
-
 func Whitelist(hostname string) (value string) {
 	i := strings.Index(hostname, ".")
 	if i > -1 {
 		return hostname[i:]
 	}
 	return hostname
+}
+
+func DetectAzureAKS() bool {
+	return true
 }

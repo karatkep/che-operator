@@ -31,6 +31,8 @@ func getGatewayOauthProxyConfigSpec(ctx *deploy.DeployContext, cookieSecret stri
 	var config string
 	if util.IsOpenShift {
 		config = openshiftOauthProxyConfig(ctx, cookieSecret)
+	} else if util.IsAzureAKS {
+		config = azureAKSOauthProxyconfig(ctx, cookieSecret)
 	} else {
 		config = kubernetesOauthProxyconfig(ctx, cookieSecret)
 	}
@@ -79,7 +81,7 @@ skip_provider_button = false
 		skipAuthConfig(ctx.CheCluster))
 }
 
-func kubernetesOauthProxyconfig(ctx *deploy.DeployContext, cookieSecret string) string {
+func azureAKSOauthProxyconfig(ctx *deploy.DeployContext, cookieSecret string) string {
 	return fmt.Sprintf(`
 proxy_prefix = "/oauth"
 http_address = ":%d"
@@ -114,6 +116,37 @@ cookie_domains = "%s"
 		cookieSecret,
 		util.Whitelist(ctx.CheCluster.GetCheHost()),
 		util.Whitelist(ctx.CheCluster.GetCheHost()),
+		skipAuthConfig(ctx.CheCluster))
+}
+
+func kubernetesOauthProxyconfig(ctx *deploy.DeployContext, cookieSecret string) string {
+	return fmt.Sprintf(`
+proxy_prefix = "/oauth"
+http_address = ":%d"
+https_address = ""
+provider = "oidc"
+redirect_url = "https://%s/oauth/callback"
+oidc_issuer_url = "%s"
+insecure_oidc_skip_issuer_verification = true
+ssl_insecure_skip_verify = true
+upstreams = [
+	"http://127.0.0.1:8081/"
+]
+client_id = "%s"
+client_secret = "%s"
+cookie_secret = "%s"
+cookie_expire = "24h0m0s"
+email_domains = "*"
+cookie_httponly = false
+pass_authorization_header = true
+skip_provider_button = true
+%s
+`, GatewayServicePort,
+		ctx.CheCluster.GetCheHost(),
+		ctx.CheCluster.Spec.Auth.IdentityProviderURL,
+		ctx.CheCluster.Spec.Auth.OAuthClientName,
+		ctx.CheCluster.Spec.Auth.OAuthSecret,
+		cookieSecret,
 		skipAuthConfig(ctx.CheCluster))
 }
 

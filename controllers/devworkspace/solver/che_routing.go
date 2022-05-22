@@ -450,7 +450,7 @@ func provisionMainWorkspaceRoute(cheCluster *v2alpha1.CheCluster, routing *dwo.D
 		// on OpenShift, we need to set authorization header.
 		// This MUST come before Auth, because Auth needs Authorization header to be properly set.
 		cfg.AddAuthHeaderRewrite(dwId)
-	} else {
+	} else if util.IsAzureAKS {
 		cfg.AddAuthHeaderRewrite(dwId)
 		cfg.AddStripcookie(dwId)
 	}

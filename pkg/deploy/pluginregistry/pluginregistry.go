@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/eclipse-che/che-operator/pkg/deploy/gateway"
+	"github.com/eclipse-che/che-operator/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/eclipse-che/che-operator/pkg/deploy"
@@ -132,6 +133,8 @@ func (p *PluginRegistryReconciler) createGatewayConfig(ctx *deploy.DeployContext
 		"http://"+deploy.PluginRegistryName+":8080",
 		[]string{pathPrefix})
 
-	cfg.AddStripcookie(deploy.PluginRegistryName)
+	if util.IsAzureAKS {
+		cfg.AddStripcookie(deploy.PluginRegistryName)
+	}
 	return cfg
 }
