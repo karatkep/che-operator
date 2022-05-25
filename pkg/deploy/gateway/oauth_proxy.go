@@ -98,6 +98,7 @@ client_id = "%s"
 client_secret = "%s"
 cookie_secret = "%s"
 cookie_expire = "24h0m0s"
+cookie_refresh = "1h0m0s"
 email_domains = "*"
 cookie_httponly = false
 pass_authorization_header = true
